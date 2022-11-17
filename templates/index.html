@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/3.0.4/socket.io.min.js"></script>
+    <script type="text/javascript">
+        document.addEventListener( 'DOMContentLoaded', function(event) {
+            if (window.history.replaceState) {
+            window.history.replaceState( null, null, window.location.href );
+            }
+
+            var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+            socket.on( 'connect', function() {
+                socket.emit('get_value');
+                socket.emit( 'secure_button', {
+                    'check' : 'connect_msg'
+                } );
+
+                var form = $('form.form2').on( 'submit', function(e) {
+                    e.preventDefault()
+                    let myMessage = $('input.message').val()
+                    socket.emit( 'text_receiver', {
+                        'text' : myMessage
+                    } )
+                    $('input.message').val('').focus()
+                } );
+
+                var form = $('form.form3').on( 'submit', function(e) {
+                    e.preventDefault()
+                    socket.emit( 'secure_button', {
+                        'check' : 'check_msg'
+                    } )
+                } );
+            } );
+            socket.on( 'pass_msg', function(msg) {
+                document.getElementById("secure").value = msg
+            } );
+            socket.on( 'get_val_response', function(msg_mov, msg_face) {
+                if (msg_mov === "OFF") {
+                    document.getElementById("stat_mov").innerHTML = "[STATUS: OFF]";
+                } else {
+                    document.getElementById("stat_mov").innerHTML = "[STATUS: ON]";
+                }
+                if (msg_face === "OFF") {
+                    document.getElementById("stat_face").innerHTML = "[STATUS: OFF]";
+                } else {
+                    document.getElementById("stat_face").innerHTML = "[STATUS: ON]";
+                }
+            } );
+            socket.on( 'get_succ', function(msg) {
+                document.getElementById("succ").innerHTML = msg
+            } )
+        } )
+    </script>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css"
+          integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+
+    <title>Not a Security Camera</title>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col-lg-8  offset-lg-2">
+            <u><h2 class="mt-5">Not a Web Cam [Live Stream]: </h2></u><br>
+                <img src="{{ url_for('video_feed') }}" width="100%"><br><br>
+            
+                <br><u><h2>Commands:  </h2></u><br>
+                <form method="POST" action="/">
+                    <input type="submit" value="Turn on Movement Detector" name="action1" /><br><br>
+                    <input type="submit" value="Turn off Movement Detector" name="action2" /><br>
+                    <b><p id="stat_mov"></p></b>
+                    <br>
+                    <input type="submit" value="Turn on Face Detector" name="action3" /><br><br>
+                    <input type="submit" value="Turn off Face Detector" name="action4" /><br>
+                    <b><p id="stat_face"></p></b>
+                </form><br>
+                <form class="form3" action="/" method="POST">
+                    <input id="secure" type="submit" class="secureButton" value="TURN ON SECURE MODE" /><br><br>
+                    <input type="button" value="LOGOUT" onclick="location.href='/logout';" />
+                </form>
+                <br><br>
+                <u><h2>Send text for the system to speak:</h2></u><br>
+                    <form method="POST" action="/" class="form2">
+                        <input type="text" class="message" placeholder="Message" /> &nbsp;
+                        <input type="submit" class="submitMessage" /><br><br>
+                        <b><p id="succ" style="color: red;"></p></b>
+                    </form> 
+                <br><br>
+        </div>
+    </div>
+</div>
+</body>
+</html>
